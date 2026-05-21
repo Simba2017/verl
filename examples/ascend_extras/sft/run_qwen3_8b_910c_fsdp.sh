@@ -1,25 +1,23 @@
 #!/usr/bin/env bash
-# SFT | GSM8K | FSDP engine | Ascend A3 NPU (16 NPUs per node)
+# SFT | GSM8K | FSDP engine | Ascend A3 910C NPU (16 NPUs per node)
 
 # Examples:
-#   # plain SFT on Ascend A3
-#   bash run_qwen3_8b_ascend_a3_fsdp.sh /tmp/sft-ckpt
+#   # plain SFT on Ascend A3 910C
+#   bash run_qwen3_8b_910c_fsdp.sh
 
 set -x
 
-save_path=$1
-shift 1
-
-# ---- Ascend A3 fixed config ----
+# ---- Ascend A3 910C fixed config ----
 export PYTHONPATH=./verl:$PYTHONPATH
 export ASCEND_RT_VISIBLE_DEVICES=0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15
 nproc_per_node=16
-master_port=12345
-# ---- end Ascend A3 fixed config ----
+master_port=$(shuf -i 20000-65535 -n 1)
+# ---- end Ascend A3 910C fixed config ----
 
 
 # ---- user-adjustable ----
 MODEL_PATH=${MODEL_PATH:-Qwen/Qwen3-8B}
+SAVE_PATH=${SAVE_PATH:-verl_output}
 SP_SIZE=${SP_SIZE:-1}
 TRAIN_BATCH_SIZE=${TRAIN_BATCH_SIZE:-16}
 MICRO_BATCH_SIZE_PER_GPU=${MICRO_BATCH_SIZE_PER_GPU:-1}
@@ -47,8 +45,7 @@ torchrun --nnodes=1 --nproc_per_node=${nproc_per_node} --master_port=${master_po
   trainer.project_name="${PROJECT_NAME}" \
   trainer.experiment_name="${EXPERIMENT_NAME}" \
   trainer.total_epochs=${TOTAL_EPOCHS} \
-  trainer.default_local_dir="${save_path}" \
+  trainer.default_local_dir="${SAVE_PATH}" \
   trainer.logger='["console"]' \
   data.use_dynamic_bsz=False \
   engine.ulysses_sequence_parallel_size=${SP_SIZE}
-
